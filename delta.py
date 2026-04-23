@@ -2,7 +2,9 @@ import streamlit as st
 
 st.set_page_config(page_title="Paintball Takip", layout="wide")
 
-# Session state başlat
+# -------------------
+# STATE
+# -------------------
 if "page" not in st.session_state:
     st.session_state.page = 1
 
@@ -18,10 +20,7 @@ if "data" not in st.session_state:
 if st.session_state.page == 1:
     st.title("🎯 Paintball Giriş")
 
-    st.subheader("Oyuncu İsimleri")
     names_input = st.text_area("İsimleri alt alta gir (4-20 kişi)")
-
-    st.subheader("Fiyatlar")
     entry_fee = st.number_input("Giriş Ücreti", min_value=0, step=10)
     paint_price = st.number_input("1 Şarjör Fiyatı", min_value=0, step=10)
 
@@ -35,7 +34,6 @@ if st.session_state.page == 1:
             st.session_state.entry_fee = entry_fee
             st.session_state.paint_price = paint_price
 
-            # Oyuncu verilerini başlat
             for p in players:
                 st.session_state.data[p] = {
                     "paint": 0,
@@ -51,39 +49,48 @@ if st.session_state.page == 1:
             st.rerun()
 
 # -------------------
-# 2. SAYFA
+# 2. SAYFA (GELİŞTİRİLDİ)
 # -------------------
 elif st.session_state.page == 2:
     st.title("🎮 Oyun Takibi")
 
-    for player in st.session_state.players:
-        col1, col2, col3 = st.columns([2,1,3])
+    for i, player in enumerate(st.session_state.players):
 
-        # İsim
-        col1.write(f"**{player}**")
+        with st.container():
+            col1, col2, col3 = st.columns([2,2,4])
 
-        # Boya topu
-        if col2.button("➕ Boya Topu", key=f"paint_{player}"):
-            st.session_state.data[player]["paint"] += 1
+            # İSİM
+            col1.markdown(f"### {player}")
 
-        col2.write(f"🎯 {st.session_state.data[player]['paint']}")
+            # BOYA TOPU
+            with col2:
+                if st.button("➕ Boya Topu", key=f"paint_{player}"):
+                    st.session_state.data[player]["paint"] += 1
 
-        # İçecekler
-        with col3:
-            if st.button("🥤 İçecek Ekle", key=f"drink_{player}"):
-                st.session_state[f"show_{player}"] = True
+                st.markdown(
+                    f"🎯 **{st.session_state.data[player]['paint']}**",
+                )
 
-            if st.session_state.get(f"show_{player}", False):
-                drink_cols = st.columns(4)
+            # İÇECEKLER
+            with col3:
                 drinks = ["Su", "Kahve", "Redbull", "Kutu İçecek"]
 
-                for i, d in enumerate(drinks):
-                    if drink_cols[i].button(d, key=f"{player}_{d}"):
+                drink_cols = st.columns(4)
+
+                for j, d in enumerate(drinks):
+                    if drink_cols[j].button(
+                        f"{d} ({st.session_state.data[player]['drinks'][d]})",
+                        key=f"{player}_{d}"
+                    ):
                         st.session_state.data[player]["drinks"][d] += 1
+
+        # AYIRICI ÇİZGİ
+        if i != len(st.session_state.players) - 1:
+            st.markdown("---")
 
     st.divider()
 
-    if st.button("HESAPLA"):
+    if st.button("💰 HESAPLA"):
         st.session_state.page = 3
         st.rerun()
 
@@ -98,7 +105,6 @@ elif st.session_state.page == 3:
 
     for player in st.session_state.players:
         data = st.session_state.data[player]
-
         total = entry_fee + (data["paint"] * paint_price)
 
         st.subheader(player)
@@ -113,6 +119,6 @@ elif st.session_state.page == 3:
 
         st.divider()
 
-    if st.button("YENİ GRUP"):
+    if st.button("🔄 YENİ GRUP"):
         st.session_state.clear()
         st.rerun()
