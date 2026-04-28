@@ -73,26 +73,44 @@ elif st.session_state.page == 2:
     for i, player in enumerate(st.session_state.players):
 
         with st.container():
-            col1, col2, col3 = st.columns([2,2,5])
+            col1, col2, col3 = st.columns([2,3,5])
 
+            # İSİM
             col1.markdown(f"### {player}")
 
-            if col2.button("➕ Boya Topu", key=f"paint_{player}"):
+            # BOYA TOPU (+ -)
+            col_p1, col_p2, col_p3 = col2.columns([1,1,2])
+
+            if col_p1.button("➕", key=f"paint_plus_{player}"):
                 st.session_state.data[player]["paint"] += 1
                 st.rerun()
 
-            col2.markdown(f"🎯 **{st.session_state.data[player]['paint']}**")
+            if col_p2.button("➖", key=f"paint_minus_{player}"):
+                if st.session_state.data[player]["paint"] > 0:
+                    st.session_state.data[player]["paint"] -= 1
+                    st.rerun()
 
+            col_p3.markdown(f"🎯 **{st.session_state.data[player]['paint']}**")
+
+            # İÇECEKLER (+ -)
             drinks = list(st.session_state.drink_prices.keys())
             drink_cols = col3.columns(3)
 
             for j, d in enumerate(drinks):
-                if drink_cols[j % 3].button(
-                    f"{d} ({st.session_state.data[player]['drinks'][d]})",
-                    key=f"{player}_{d}"
-                ):
+                c1, c2 = drink_cols[j % 3].columns([1,1])
+
+                if c1.button(f"➕ {d}", key=f"{player}_{d}_plus"):
                     st.session_state.data[player]["drinks"][d] += 1
                     st.rerun()
+
+                if c2.button(f"➖ {d}", key=f"{player}_{d}_minus"):
+                    if st.session_state.data[player]["drinks"][d] > 0:
+                        st.session_state.data[player]["drinks"][d] -= 1
+                        st.rerun()
+
+                drink_cols[j % 3].markdown(
+                    f"**{st.session_state.data[player]['drinks'][d]} adet**"
+                )
 
         if i != len(st.session_state.players) - 1:
             st.markdown("---")
@@ -126,7 +144,6 @@ elif st.session_state.page == 3:
         total = entry_fee + paint_total + drink_total
         grand_total += total
 
-        # UI detay
         st.subheader(player)
         st.write(f"Giriş: {entry_fee} TL")
         st.write(f"Boya Topu: {data['paint']} x {paint_price} TL")
@@ -135,10 +152,8 @@ elif st.session_state.page == 3:
 
         st.divider()
 
-        # Özet tablo için
         summary_list.append({"İsim": player, "Toplam Ücret": total})
 
-        # Excel için
         excel_rows.append({
             "İsim": player,
             "Giriş Ücreti": entry_fee,
@@ -150,17 +165,23 @@ elif st.session_state.page == 3:
     # GENEL TOPLAM
     st.markdown(f"## 🧾 GENEL TOPLAM: {grand_total} TL")
 
-    # -------------------
-    # TABLO (İSİM + TOPLAM)
-    # -------------------
+    # TABLO
     st.subheader("📊 Özet Tablo")
     df_summary = pd.DataFrame(summary_list)
     st.dataframe(df_summary, use_container_width=True)
 
-    # -------------------
-    # EXCEL EXPORT
-    # -------------------
+    # EXCEL
     df_excel = pd.DataFrame(excel_rows)
+
+    total_row = pd.DataFrame([{
+        "İsim": "GENEL TOPLAM",
+        "Giriş Ücreti": "",
+        "Boya Topu Ücreti": "",
+        "Meşrubat Toplam": "",
+        "Toplam Ücret": grand_total
+    }])
+
+    df_excel = pd.concat([df_excel, total_row], ignore_index=True)
 
     def to_excel(df):
         output = BytesIO()
