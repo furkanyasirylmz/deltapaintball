@@ -78,20 +78,26 @@ if st.session_state.page == 1:
             st.rerun()
 
 # -------------------
-# 2. SAYFA (EXCEL TARZI GRID)
+# 2. SAYFA (GRUPLU NET TABLO)
 # -------------------
 elif st.session_state.page == 2:
-    st.title("🎮 Oyun Takibi (Tablo Görünüm)")
+    st.title("🎮 Oyun Takibi")
 
     drinks = list(st.session_state.drink_prices.keys())
 
-    # HEADER
-    header_cols = st.columns([2, 1] + [1]*len(drinks))
-    header_cols[0].markdown("**İsim**")
-    header_cols[1].markdown("**Boya**")
+    # -------------------
+    # HEADER (GRUPLU)
+    # -------------------
+    st.markdown("### 📊 Kontrol Paneli")
 
+    h1, h2, h3 = st.columns([2, 1, len(drinks)])
+
+    h1.markdown("**Oyuncu**")
+    h2.markdown("**Boya**")
+
+    drink_header = h3.columns(len(drinks))
     for i, d in enumerate(drinks):
-        header_cols[i+2].markdown(f"**{d}**")
+        drink_header[i].markdown(f"**{d}**")
 
     st.divider()
 
@@ -100,23 +106,23 @@ elif st.session_state.page == 2:
     # -------------------
     for player in st.session_state.players:
 
-        cols = st.columns([2, 1] + [1]*len(drinks))
+        cols = st.columns([2, 1, len(drinks)])
 
         # İSİM
         cols[0].markdown(f"**{player}**")
 
         # -------------------
-        # BOYA
+        # BOYA BLOK
         # -------------------
         paint = st.session_state.data[player]["paint"]
 
-        c1, c2 = cols[1].columns(2)
+        p1, p2 = cols[1].columns(2)
 
-        if c1.button("+", key=f"paint_plus_{player}"):
+        if p1.button("+", key=f"paint_plus_{player}"):
             st.session_state.data[player]["paint"] += 1
             st.rerun()
 
-        if c2.button("-", key=f"paint_minus_{player}"):
+        if p2.button("-", key=f"paint_minus_{player}"):
             if st.session_state.data[player]["paint"] > 0:
                 st.session_state.data[player]["paint"] -= 1
                 st.rerun()
@@ -124,27 +130,30 @@ elif st.session_state.page == 2:
         cols[1].markdown(f"🎯 **{paint}**")
 
         # -------------------
-        # İÇECEKLER
+        # İÇECEK BLOKLARI (GRUPLU VE TEMİZ)
         # -------------------
+        drink_cells = cols[2].columns(len(drinks))
+
         for i, d in enumerate(drinks):
+
             val = st.session_state.data[player]["drinks"][d]
 
-            cell = cols[i+2]
+            with drink_cells[i]:
 
-            a, b = cell.columns(2)
+                a, b = st.columns(2)
 
-            if a.button("+", key=f"{player}_{d}_plus"):
-                st.session_state.data[player]["drinks"][d] += 1
-                st.rerun()
-
-            if b.button("-", key=f"{player}_{d}_minus"):
-                if st.session_state.data[player]["drinks"][d] > 0:
-                    st.session_state.data[player]["drinks"][d] -= 1
+                if a.button("+", key=f"{player}_{d}_plus"):
+                    st.session_state.data[player]["drinks"][d] += 1
                     st.rerun()
 
-            cell.markdown(f"**{val}**")
+                if b.button("-", key=f"{player}_{d}_minus"):
+                    if st.session_state.data[player]["drinks"][d] > 0:
+                        st.session_state.data[player]["drinks"][d] -= 1
+                        st.rerun()
 
-    st.divider()
+                st.markdown(f"**{val}**")
+
+        st.divider()
 
     if st.button("💰 HESAPLA"):
         st.session_state.page = 3
