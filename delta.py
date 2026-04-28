@@ -85,7 +85,7 @@ elif st.session_state.page == 2:
 
     for player in st.session_state.players:
 
-        with st.expander(f"🎮 {player}", expanded=True):
+        with st.expander(f"🎮 {player}", expanded=False):
 
             col1, col2 = st.columns([1, 3])
 
