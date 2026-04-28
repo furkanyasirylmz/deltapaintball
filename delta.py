@@ -20,7 +20,6 @@ if "drink_prices" not in st.session_state:
     st.session_state.drink_prices = {}
 
 if "payments" not in st.session_state:
-    # {player: {"deposit": 0, "cash": 0, "iban": 0}}
     st.session_state.payments = {}
 
 # -------------------
@@ -62,14 +61,12 @@ if st.session_state.page == 1:
                 "Kutu İçecek": can_price
             }
 
-            # Oyun verisi
             for p in players:
                 st.session_state.data[p] = {
                     "paint": 0,
                     "drinks": {d: 0 for d in st.session_state.drink_prices}
                 }
 
-            # Ödeme verisi
             for p in players:
                 st.session_state.payments[p] = {
                     "deposit": 0,
@@ -81,63 +78,75 @@ if st.session_state.page == 1:
             st.rerun()
 
 # -------------------
-# 2. SAYFA (Oyun)
+# 2. SAYFA (YATAY TABLO YENİ HAL)
 # -------------------
 elif st.session_state.page == 2:
     st.title("🎮 Oyun Takibi")
 
-    for i, player in enumerate(st.session_state.players):
-
-        with st.container():
-            col1, col2, col3 = st.columns([2,3,5])
-
-            col1.markdown(f"### {player}")
-
-            # BOYA (+ -)
-            c1, c2, c3 = col2.columns([1,1,2])
-
-            if c1.button("➕", key=f"paint_plus_{player}"):
-                st.session_state.data[player]["paint"] += 1
-                st.rerun()
-
-            if c2.button("➖", key=f"paint_minus_{player}"):
-                if st.session_state.data[player]["paint"] > 0:
-                    st.session_state.data[player]["paint"] -= 1
-                    st.rerun()
-
-            c3.markdown(f"🎯 **{st.session_state.data[player]['paint']}**")
-
-            # İÇECEKLER (+ -)
-            drinks = list(st.session_state.drink_prices.keys())
-            drink_cols = col3.columns(3)
-
-            for j, d in enumerate(drinks):
-                cc1, cc2 = drink_cols[j % 3].columns([1,1])
-
-                if cc1.button(f"➕ {d}", key=f"{player}_{d}_plus"):
-                    st.session_state.data[player]["drinks"][d] += 1
-                    st.rerun()
-
-                if cc2.button(f"➖ {d}", key=f"{player}_{d}_minus"):
-                    if st.session_state.data[player]["drinks"][d] > 0:
-                        st.session_state.data[player]["drinks"][d] -= 1
-                        st.rerun()
-
-                drink_cols[j % 3].markdown(
-                    f"**{st.session_state.data[player]['drinks'][d]} adet**"
-                )
-
-        if i != len(st.session_state.players) - 1:
-            st.markdown("---")
+    # HEADER
+    header_cols = st.columns([2, 2, 6])
+    header_cols[0].markdown("### Oyuncu")
+    header_cols[1].markdown("### Boya")
+    header_cols[2].markdown("### İçecekler")
 
     st.divider()
+
+    for player in st.session_state.players:
+
+        row = st.container()
+        c1, c2, c3 = row.columns([2, 2, 6])
+
+        # -------------------
+        # PLAYER NAME
+        # -------------------
+        c1.markdown(f"### {player}")
+
+        # -------------------
+        # PAINT
+        # -------------------
+        b1, b2, b3 = c2.columns([1, 1, 2])
+
+        if b1.button("➕", key=f"paint_plus_{player}"):
+            st.session_state.data[player]["paint"] += 1
+            st.rerun()
+
+        if b2.button("➖", key=f"paint_minus_{player}"):
+            if st.session_state.data[player]["paint"] > 0:
+                st.session_state.data[player]["paint"] -= 1
+                st.rerun()
+
+        b3.markdown(f"🎯 **{st.session_state.data[player]['paint']}**")
+
+        # -------------------
+        # DRINKS GRID
+        # -------------------
+        drinks = list(st.session_state.drink_prices.keys())
+        drink_grid = c3.columns(3)
+
+        for j, d in enumerate(drinks):
+            cc1, cc2 = drink_grid[j % 3].columns([1, 1])
+
+            if cc1.button(f"+ {d}", key=f"{player}_{d}_plus"):
+                st.session_state.data[player]["drinks"][d] += 1
+                st.rerun()
+
+            if cc2.button(f"- {d}", key=f"{player}_{d}_minus"):
+                if st.session_state.data[player]["drinks"][d] > 0:
+                    st.session_state.data[player]["drinks"][d] -= 1
+                    st.rerun()
+
+            drink_grid[j % 3].markdown(
+                f"**{d}: {st.session_state.data[player]['drinks'][d]}**"
+            )
+
+        st.divider()
 
     if st.button("💰 HESAPLA"):
         st.session_state.page = 3
         st.rerun()
 
 # -------------------
-# 3. SAYFA (Hesap)
+# 3. SAYFA
 # -------------------
 elif st.session_state.page == 3:
     st.title("💰 Hesap Özeti")
@@ -170,7 +179,6 @@ elif st.session_state.page == 3:
 
     st.markdown(f"## 🧾 GENEL TOPLAM: {grand_total} TL")
 
-    st.subheader("📊 Özet Tablo")
     st.dataframe(pd.DataFrame(summary_list), use_container_width=True)
 
     if st.button("➡️ ÖDEME EKRANINA GEÇ"):
@@ -178,7 +186,7 @@ elif st.session_state.page == 3:
         st.rerun()
 
 # -------------------
-# 4. SAYFA (Ödeme & Depozito)
+# 4. SAYFA
 # -------------------
 elif st.session_state.page == 4:
     st.title("💳 Ödeme & Depozito")
@@ -187,9 +195,6 @@ elif st.session_state.page == 4:
     paint_price = st.session_state.paint_price
     drink_prices = st.session_state.drink_prices
 
-    # -------------------
-    # Depozito Form
-    # -------------------
     st.subheader("➕ Depozito Girişi")
 
     col_d1, col_d2, col_d3 = st.columns([2,2,1])
@@ -201,9 +206,6 @@ elif st.session_state.page == 4:
         st.session_state.payments[selected_player]["deposit"] += deposit_amount
         st.rerun()
 
-    # -------------------
-    # Tablo
-    # -------------------
     st.divider()
     st.subheader("📊 Ödeme Tablosu")
 
@@ -223,27 +225,20 @@ elif st.session_state.page == 4:
 
         borc = entry_fee + paint_total + drink_total
 
-        # INPUT ödeme
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
         col1.write(f"**{player}**")
         col2.write(borc)
         col3.write(pay["deposit"])
 
-        pay["cash"] = col4.number_input(
-            "Nakit", value=pay["cash"], key=f"cash_{player}"
-        )
-
-        pay["iban"] = col5.number_input(
-            "IBAN", value=pay["iban"], key=f"iban_{player}"
-        )
+        pay["cash"] = col4.number_input("Nakit", value=pay["cash"], key=f"cash_{player}")
+        pay["iban"] = col5.number_input("IBAN", value=pay["iban"], key=f"iban_{player}")
 
         total_paid = pay["deposit"] + pay["cash"] + pay["iban"]
         kalan = borc - total_paid
 
         col6.write(total_paid)
 
-        # RENK
         if kalan > 0:
             col7.markdown(f"🔴 {kalan}")
         elif kalan == 0:
@@ -251,7 +246,6 @@ elif st.session_state.page == 4:
         else:
             col7.markdown(f"🟡 {kalan}")
 
-        # toplamlar
         total_borc += borc
         total_deposit += pay["deposit"]
         total_cash += pay["cash"]
@@ -267,17 +261,12 @@ elif st.session_state.page == 4:
             "Kalan": kalan
         })
 
-    # GENEL
     st.divider()
     st.markdown(f"**Toplam Borç:** {total_borc}")
     st.markdown(f"**Toplam Depozito:** {total_deposit}")
     st.markdown(f"**Nakit Toplam:** {total_cash}")
     st.markdown(f"**IBAN Toplam:** {total_iban}")
-    st.markdown(f"**GENEL TAHSİLAT:** {total_deposit + total_cash + total_iban}")
 
-    # -------------------
-    # EXCEL
-    # -------------------
     df_excel = pd.DataFrame(excel_rows)
 
     total_row = pd.DataFrame([{
@@ -301,10 +290,10 @@ elif st.session_state.page == 4:
     excel_file = to_excel(df_excel)
 
     st.download_button(
-        label="📥 Excel İndir",
-        data=excel_file,
-        file_name="odeme_rapor.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "📥 Excel İndir",
+        excel_file,
+        "odeme_rapor.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
     if st.button("🔄 YENİ GRUP"):
