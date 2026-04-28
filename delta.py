@@ -78,68 +78,56 @@ if st.session_state.page == 1:
             st.rerun()
 
 # -------------------
-# 2. SAYFA (YATAY TABLO YENİ HAL)
+# 2. SAYFA (YENİ EXPANDER TASARIMI)
 # -------------------
 elif st.session_state.page == 2:
     st.title("🎮 Oyun Takibi")
 
-    # HEADER
-    header_cols = st.columns([2, 2, 6])
-    header_cols[0].markdown("### Oyuncu")
-    header_cols[1].markdown("### Boya")
-    header_cols[2].markdown("### İçecekler")
-
-    st.divider()
-
     for player in st.session_state.players:
 
-        row = st.container()
-        c1, c2, c3 = row.columns([2, 2, 6])
+        with st.expander(f"🎮 {player}", expanded=True):
 
-        # -------------------
-        # PLAYER NAME
-        # -------------------
-        c1.markdown(f"### {player}")
+            col1, col2 = st.columns([1, 3])
 
-        # -------------------
-        # PAINT
-        # -------------------
-        b1, b2, b3 = c2.columns([1, 1, 2])
+            # -------------------
+            # BOYA
+            # -------------------
+            b1, b2, b3 = col1.columns([1, 1, 2])
 
-        if b1.button("➕", key=f"paint_plus_{player}"):
-            st.session_state.data[player]["paint"] += 1
-            st.rerun()
-
-        if b2.button("➖", key=f"paint_minus_{player}"):
-            if st.session_state.data[player]["paint"] > 0:
-                st.session_state.data[player]["paint"] -= 1
+            if b1.button("➕ Boya", key=f"paint_plus_{player}"):
+                st.session_state.data[player]["paint"] += 1
                 st.rerun()
 
-        b3.markdown(f"🎯 **{st.session_state.data[player]['paint']}**")
-
-        # -------------------
-        # DRINKS GRID
-        # -------------------
-        drinks = list(st.session_state.drink_prices.keys())
-        drink_grid = c3.columns(3)
-
-        for j, d in enumerate(drinks):
-            cc1, cc2 = drink_grid[j % 3].columns([1, 1])
-
-            if cc1.button(f"+ {d}", key=f"{player}_{d}_plus"):
-                st.session_state.data[player]["drinks"][d] += 1
-                st.rerun()
-
-            if cc2.button(f"- {d}", key=f"{player}_{d}_minus"):
-                if st.session_state.data[player]["drinks"][d] > 0:
-                    st.session_state.data[player]["drinks"][d] -= 1
+            if b2.button("➖ Boya", key=f"paint_minus_{player}"):
+                if st.session_state.data[player]["paint"] > 0:
+                    st.session_state.data[player]["paint"] -= 1
                     st.rerun()
 
-            drink_grid[j % 3].markdown(
-                f"**{d}: {st.session_state.data[player]['drinks'][d]}**"
-            )
+            b3.markdown(f"🎯 **{st.session_state.data[player]['paint']}**")
 
-        st.divider()
+            # -------------------
+            # İÇECEKLER
+            # -------------------
+            drinks = list(st.session_state.drink_prices.keys())
+            drink_cols = col2.columns(3)
+
+            for j, d in enumerate(drinks):
+                c1, c2 = drink_cols[j % 3].columns([1, 1])
+
+                if c1.button(f"+ {d}", key=f"{player}_{d}_plus"):
+                    st.session_state.data[player]["drinks"][d] += 1
+                    st.rerun()
+
+                if c2.button(f"- {d}", key=f"{player}_{d}_minus"):
+                    if st.session_state.data[player]["drinks"][d] > 0:
+                        st.session_state.data[player]["drinks"][d] -= 1
+                        st.rerun()
+
+                drink_cols[j % 3].markdown(
+                    f"**{d}: {st.session_state.data[player]['drinks'][d]}**"
+                )
+
+    st.divider()
 
     if st.button("💰 HESAPLA"):
         st.session_state.page = 3
